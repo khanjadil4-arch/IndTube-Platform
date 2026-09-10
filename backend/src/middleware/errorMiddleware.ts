@@ -10,6 +10,10 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  console.error(err.message);
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(err);
+  } else {
+    console.error(err.message);
+  }
   res.status(500).json({ error: 'Internal server error' });
 }

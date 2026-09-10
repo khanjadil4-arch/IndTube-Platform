@@ -1,13 +1,8 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import { getHealth } from '../controllers/healthController.js';
 
 const router = Router();
 
-router.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'ok',
-    service: 'indtube-api',
-    timestamp: new Date().toISOString(),
-  });
-});
+router.get('/health', getHealth);
 
 export default router;

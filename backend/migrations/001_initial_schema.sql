@@ -197,7 +197,7 @@ CREATE TABLE reports (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_reports_reporter ON reports (report_id);
+CREATE INDEX idx_reports_reporter ON reports (reporter_id);
 CREATE INDEX idx_reports_status   ON reports (status);
 CREATE INDEX idx_reports_target   ON reports (target_type, status);
 
