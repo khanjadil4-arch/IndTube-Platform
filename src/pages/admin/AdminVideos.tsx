@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { Search, Trash2, Eye, Flag } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { mockVideos, mockReports } from '@/data/mockData';
 import { formatCount, formatRelativeTime } from '@/lib/format';
 
 export default function AdminVideos() {
   const [query, setQuery] = useState('');
+  const [videos, setVideos] = useState(mockVideos);
 
-  const filtered = mockVideos.filter(
+  const filtered = videos.filter(
     (v) =>
       v.title.toLowerCase().includes(query.toLowerCase()) ||
-      v.channelName.toLowerCase().includes(query.toLowerCase())
+      v.channelName.toLowerCase().includes(query.toLowerCase()),
   );
 
   const reportedIds = new Set(
-    mockReports.filter((r) => r.target === 'video').map((r) => r.targetId)
+    mockReports.filter((r) => r.target === 'video').map((r) => r.targetId),
   );
+
+  const handleDelete = (id: string) => {
+    setVideos((prev) => prev.filter((v) => v.id !== id));
+  };
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto">
@@ -47,15 +53,22 @@ export default function AdminVideos() {
               </p>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              <button className="p-2 rounded hover:bg-ink-800 transition-colors" title="View">
+              <Link to={`/watch/${v.id}`} className="p-2 rounded hover:bg-ink-800 transition-colors" title="View">
                 <Eye className="w-4 h-4 text-ink-400" />
-              </button>
-              <button className="p-2 rounded hover:bg-ink-800 transition-colors" title="Delete">
+              </Link>
+              <button
+                onClick={() => handleDelete(v.id)}
+                className="p-2 rounded hover:bg-ink-800 transition-colors"
+                title="Delete"
+              >
                 <Trash2 className="w-4 h-4 text-error-400" />
               </button>
             </div>
           </div>
         ))}
+        {filtered.length === 0 && (
+          <p className="text-center text-ink-500 text-sm py-10">No videos found.</p>
+        )}
       </div>
     </div>
   );

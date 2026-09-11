@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Search, Shield, Ban, CheckCircle2, MoreVertical } from 'lucide-react';
+import { Search, Shield, Ban, CheckCircle2, MoreVertical, RotateCcw } from 'lucide-react';
 import { mockUsers } from '@/data/mockData';
 import { formatCount, formatRelativeTime } from '@/lib/format';
-import type { UserRole } from '@/types';
+import type { User, UserRole } from '@/types';
 
 const roleColors: Record<UserRole, string> = {
   owner: 'bg-brand-600 text-white',
@@ -14,8 +14,24 @@ const roleColors: Record<UserRole, string> = {
 export default function AdminUsers() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | UserRole>('all');
+  const [users, setUsers] = useState<(User & { banned?: boolean })[]>(mockUsers);
 
-  const filtered = mockUsers.filter((u) => {
+  const toggleBan = (id: string) => {
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, banned: !u.banned } : u)));
+  };
+
+  const cycleRole = (id: string) => {
+    const roles: UserRole[] = ['viewer', 'creator', 'admin', 'owner'];
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id !== id) return u;
+        const nextIdx = (roles.indexOf(u.role) + 1) % roles.length;
+        return { ...u, role: roles[nextIdx] };
+      }),
+    );
+  };
+
+  const filtered = users.filter((u) => {
     const matchesQuery =
       u.username.toLowerCase().includes(query.toLowerCase()) ||
       u.displayName.toLowerCase().includes(query.toLowerCase());
@@ -71,7 +87,7 @@ export default function AdminUsers() {
                       <img src={u.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className="font-medium truncate">{u.displayName}</span>
+                          <span className={`font-medium truncate ${u.banned ? 'line-through text-ink-500' : ''}`}>{u.displayName}</span>
                           {u.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-ink-500 shrink-0" />}
                         </div>
                         <span className="text-xs text-ink-500">@{u.username}</span>
@@ -91,11 +107,15 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 rounded hover:bg-ink-800 transition-colors" title="Change role">
+                      <button onClick={() => cycleRole(u.id)} className="p-1.5 rounded hover:bg-ink-800 transition-colors" title="Change role">
                         <Shield className="w-4 h-4 text-ink-400" />
                       </button>
-                      <button className="p-1.5 rounded hover:bg-ink-800 transition-colors" title="Ban">
-                        <Ban className="w-4 h-4 text-error-400" />
+                      <button
+                        onClick={() => toggleBan(u.id)}
+                        className="p-1.5 rounded hover:bg-ink-800 transition-colors"
+                        title={u.banned ? 'Unban' : 'Ban'}
+                      >
+                        {u.banned ? <RotateCcw className="w-4 h-4 text-success-400" /> : <Ban className="w-4 h-4 text-error-400" />}
                       </button>
                       <button className="p-1.5 rounded hover:bg-ink-800 transition-colors">
                         <MoreVertical className="w-4 h-4 text-ink-400" />

@@ -12,9 +12,15 @@ export default function AdminSettings() {
     enableComments: true,
     enableLikes: true,
   });
+  const [saved, setSaved] = useState(false);
 
   const handleToggle = (key: keyof typeof settings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   };
 
   return (
@@ -129,9 +135,12 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-500 transition-colors w-fit ml-auto">
+        <button
+          onClick={handleSave}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-500 transition-colors w-fit ml-auto"
+        >
           <Save className="w-4 h-4" />
-          Save Settings
+          {saved ? 'Saved!' : 'Save Settings'}
         </button>
       </div>
     </div>

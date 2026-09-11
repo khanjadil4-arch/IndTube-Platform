@@ -155,6 +155,36 @@ export default function UploadPage() {
     abortRef.current = true;
   };
 
+  const handleDemoUpload = useCallback(async () => {
+    if (!videoFile) return;
+    setStep('uploading');
+    setUploadState('uploading');
+    setProgress(0);
+    abortRef.current = false;
+
+    const totalBytes = videoFile.size;
+    const chunkSize = 8 * 1024 * 1024;
+    const totalParts = Math.max(1, Math.ceil(totalBytes / chunkSize));
+
+    for (let partNum = 1; partNum <= totalParts; partNum++) {
+      if (abortRef.current) break;
+      const start = (partNum - 1) * chunkSize;
+      const end = Math.min(start + chunkSize, totalBytes);
+      await new Promise((r) => setTimeout(r, 200));
+      setProgress(Math.min(99, Math.round((end / totalBytes) * 100)));
+    }
+
+    if (abortRef.current) {
+      setUploadState('failed');
+      setError('Upload was cancelled.');
+      return;
+    }
+
+    setProgress(100);
+    setUploadState('completed');
+    setStep('result');
+  }, [videoFile]);
+
   const isRealUpload = !!config.apiBaseUrl && isAuthenticated;
 
   return (

@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { Search, CheckCircle2, Trash2, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { mockChannels } from '@/data/mockData';
 import { formatCount, formatRelativeTime } from '@/lib/format';
 
 export default function AdminChannels() {
   const [query, setQuery] = useState('');
+  const [channels, setChannels] = useState(mockChannels);
 
-  const filtered = mockChannels.filter(
+  const filtered = channels.filter(
     (c) =>
       c.name.toLowerCase().includes(query.toLowerCase()) ||
-      c.handle.toLowerCase().includes(query.toLowerCase())
+      c.handle.toLowerCase().includes(query.toLowerCase()),
   );
+
+  const handleDelete = (id: string) => {
+    setChannels((prev) => prev.filter((c) => c.id !== id));
+  };
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto">
@@ -42,15 +48,22 @@ export default function AdminChannels() {
               <p className="text-xs text-ink-600 mt-0.5">{formatRelativeTime(c.createdAt)}</p>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              <button className="p-2 rounded hover:bg-ink-800 transition-colors" title="View">
+              <Link to={`/channel/${c.id}`} className="p-2 rounded hover:bg-ink-800 transition-colors" title="View">
                 <Eye className="w-4 h-4 text-ink-400" />
-              </button>
-              <button className="p-2 rounded hover:bg-ink-800 transition-colors" title="Delete">
+              </Link>
+              <button
+                onClick={() => handleDelete(c.id)}
+                className="p-2 rounded hover:bg-ink-800 transition-colors"
+                title="Delete"
+              >
                 <Trash2 className="w-4 h-4 text-error-400" />
               </button>
             </div>
           </div>
         ))}
+        {filtered.length === 0 && (
+          <p className="text-center text-ink-500 text-sm py-10 col-span-full">No channels found.</p>
+        )}
       </div>
     </div>
   );

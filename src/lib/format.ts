@@ -14,7 +14,7 @@ export function formatDuration(seconds: number): string {
 }
 
 export function formatRelativeTime(iso: string): string {
-  const now = new Date('2025-09-08T00:00:00Z').getTime();
+  const now = Date.now();
   const then = new Date(iso).getTime();
   const diff = now - then;
   const minutes = Math.floor(diff / 60000);

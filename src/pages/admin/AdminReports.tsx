@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Flag, Check, X, Eye } from 'lucide-react';
 import { mockReports } from '@/data/mockData';
 import { formatRelativeTime } from '@/lib/format';
-import type { ReportStatus } from '@/types';
+import type { Report, ReportStatus } from '@/types';
 
 const statusColors: Record<ReportStatus, string> = {
   pending: 'bg-warning-950 text-warning-400',
@@ -13,8 +13,13 @@ const statusColors: Record<ReportStatus, string> = {
 
 export default function AdminReports() {
   const [filter, setFilter] = useState<'all' | ReportStatus>('all');
+  const [reports, setReports] = useState<Report[]>(mockReports);
 
-  const filtered = filter === 'all' ? mockReports : mockReports.filter((r) => r.status === filter);
+  const updateStatus = (id: string, status: ReportStatus) => {
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+  };
+
+  const filtered = filter === 'all' ? reports : reports.filter((r) => r.status === filter);
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -56,15 +61,24 @@ export default function AdminReports() {
             </div>
             {r.status === 'pending' && (
               <div className="flex gap-2 mt-3 pl-13">
-                <button className="flex items-center gap-1 px-3 py-1.5 bg-success-950 text-success-400 rounded-lg text-xs font-medium hover:bg-success-900 transition-colors">
+                <button
+                  onClick={() => updateStatus(r.id, 'resolved')}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-success-950 text-success-400 rounded-lg text-xs font-medium hover:bg-success-900 transition-colors"
+                >
                   <Check className="w-3.5 h-3.5" />
                   Resolve
                 </button>
-                <button className="flex items-center gap-1 px-3 py-1.5 bg-ink-800 text-ink-400 rounded-lg text-xs font-medium hover:bg-ink-700 transition-colors">
+                <button
+                  onClick={() => updateStatus(r.id, 'dismissed')}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-ink-800 text-ink-400 rounded-lg text-xs font-medium hover:bg-ink-700 transition-colors"
+                >
                   <X className="w-3.5 h-3.5" />
                   Dismiss
                 </button>
-                <button className="flex items-center gap-1 px-3 py-1.5 bg-ink-800 text-ink-400 rounded-lg text-xs font-medium hover:bg-ink-700 transition-colors">
+                <button
+                  onClick={() => updateStatus(r.id, 'reviewing')}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-ink-800 text-ink-400 rounded-lg text-xs font-medium hover:bg-ink-700 transition-colors"
+                >
                   <Eye className="w-3.5 h-3.5" />
                   Review
                 </button>

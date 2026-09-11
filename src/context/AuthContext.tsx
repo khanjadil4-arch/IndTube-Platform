@@ -1,7 +1,7 @@
 /**
  * AuthContext — provides current user, login, signup, logout, and session
  * restoration across the app. When the backend is not configured, the context
- * is in a "demo mode" state so existing mock-data pages continue working.
+ * uses a demo mode with a mock user so all pages remain functional.
  */
 
 import {
@@ -26,6 +26,8 @@ import {
   isAuthEnabled,
 } from '@/services/authService';
 
+const DEMO_USER_KEY = 'indtube_demo_user';
+
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
@@ -37,12 +39,27 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function getDemoUser(): AuthUser | null {
+  try {
+    const raw = localStorage.getItem(DEMO_USER_KEY);
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeDemoUser(user: AuthUser | null): void {
+  if (user) localStorage.setItem(DEMO_USER_KEY, JSON.stringify(user));
+  else localStorage.removeItem(DEMO_USER_KEY);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthEnabled) {
+      setUser(getDemoUser());
       setLoading(false);
       return;
     }
@@ -72,15 +89,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await loginUser(email, password);
+  const login = useCallback(async (email: string, _password: string) => {
+    if (!isAuthEnabled) {
+      const demoUser: AuthUser = {
+        id: 'demo-user',
+        email,
+        username: email.split('@')[0] || 'viewer',
+        displayName: email.split('@')[0] || 'Viewer',
+        avatarUrl: null,
+        role: 'ADMIN',
+        isVerified: false,
+      };
+      storeDemoUser(demoUser);
+      setUser(demoUser);
+      return;
+    }
+    const res = await loginUser(email, _password);
     storeTokens(res.accessToken, res.refreshToken);
     setUser(res.user);
   }, []);
 
   const signup = useCallback(
-    async (email: string, username: string, password: string, displayName?: string) => {
-      const res = await signupUser(email, username, password, displayName);
+    async (email: string, username: string, _password: string, displayName?: string) => {
+      if (!isAuthEnabled) {
+        const demoUser: AuthUser = {
+          id: `demo-${Date.now()}`,
+          email,
+          username,
+          displayName: displayName || username,
+          avatarUrl: null,
+          role: 'VIEWER',
+          isVerified: false,
+        };
+        storeDemoUser(demoUser);
+        setUser(demoUser);
+        return;
+      }
+      const res = await signupUser(email, username, _password, displayName);
       storeTokens(res.accessToken, res.refreshToken);
       setUser(res.user);
     },
@@ -88,6 +133,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    if (!isAuthEnabled) {
+      storeDemoUser(null);
+      setUser(null);
+      return;
+    }
     const refreshToken = getStoredRefreshToken();
     if (refreshToken) {
       try {

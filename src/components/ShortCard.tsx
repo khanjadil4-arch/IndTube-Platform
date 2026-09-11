@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Play, Heart } from 'lucide-react';
 import type { Short } from '@/types';
 import { formatCount } from '@/lib/format';
@@ -9,10 +8,7 @@ interface Props {
 
 export default function ShortCard({ short }: Props) {
   return (
-    <Link
-      to={`/watch/${short.id}`}
-      className="flex flex-col shrink-0 w-[140px] sm:w-[160px] group"
-    >
+    <div className="flex flex-col shrink-0 w-[140px] sm:w-[160px] group cursor-pointer">
       <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-ink-800">
         <img
           src={short.thumbnailUrl}
@@ -43,6 +39,6 @@ export default function ShortCard({ short }: Props) {
       </div>
       <p className="text-xs text-ink-400 mt-1.5 truncate">{short.channelName}</p>
       <p className="text-[10px] text-ink-500">{formatCount(short.viewCount)} views</p>
-    </Link>
+    </div>
   );
 }
