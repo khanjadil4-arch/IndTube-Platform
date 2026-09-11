@@ -225,7 +225,7 @@ export default function UploadPage() {
             if (isRealUpload) {
               handleUpload();
             } else {
-              setError('Backend is not configured. Set VITE_API_BASE_URL and sign in to upload.');
+              handleDemoUpload();
             }
           }}
           className="flex flex-col gap-4"

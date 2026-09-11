@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import Sidebar from '@/components/layout/Sidebar';
 import HomePage from '@/pages/HomePage';
@@ -143,6 +143,19 @@ export default function App() {
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Route>
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen bg-ink-950 flex flex-col items-center justify-center px-4">
+              <p className="text-6xl font-extrabold text-brand-600 mb-2">404</p>
+              <p className="text-lg font-semibold text-ink-200 mb-1">Page not found</p>
+              <p className="text-sm text-ink-500 mb-6">The page you're looking for doesn't exist.</p>
+              <Link to="/" className="px-6 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-500 transition-colors">
+                Back to home
+              </Link>
+            </div>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -2,6 +2,11 @@ import { Link } from 'react-router-dom';
 import { MoreVertical, CheckCircle2 } from 'lucide-react';
 import type { Video } from '@/types';
 import { formatCount, formatDuration, formatRelativeTime } from '@/lib/format';
+import { mockChannels } from '@/data/mockData';
+
+const verifiedChannelIds = new Set(
+  mockChannels.filter((c) => c.isVerified).map((c) => c.id),
+);
 
 interface Props {
   video: Video;
@@ -41,9 +46,7 @@ export default function FeaturedVideoCard({ video }: Props) {
           </Link>
           <div className="flex items-center gap-1 mt-1">
             <span className="text-xs text-ink-400">{video.channelName}</span>
-            {video.channelName === 'CodeCraft' || video.channelName === 'SoundWave' || video.channelName === 'PixelPlay' ? (
-              <CheckCircle2 className="w-3 h-3 text-ink-500" />
-            ) : null}
+            {verifiedChannelIds.has(video.channelId) && <CheckCircle2 className="w-3 h-3 text-ink-500" />}
           </div>
           <p className="text-xs text-ink-500 mt-0.5">
             {formatCount(video.viewCount)} views · {formatRelativeTime(video.createdAt)}

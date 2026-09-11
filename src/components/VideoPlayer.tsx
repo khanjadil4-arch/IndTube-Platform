@@ -11,6 +11,11 @@ import {
 } from 'lucide-react';
 import type { Video } from '@/types';
 import { formatCount, formatRelativeTime } from '@/lib/format';
+import { mockChannels } from '@/data/mockData';
+
+const verifiedChannelIds = new Set(
+  mockChannels.filter((c) => c.isVerified).map((c) => c.id),
+);
 
 interface Props {
   video: Video;
@@ -77,7 +82,7 @@ export default function VideoPlayer({
           <div className="hidden sm:block">
             <div className="flex items-center gap-1">
               <span className="font-semibold text-sm">{video.channelName}</span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-ink-500" />
+              {verifiedChannelIds.has(video.channelId) && <CheckCircle2 className="w-3.5 h-3.5 text-ink-500" />}
             </div>
             <span className="text-xs text-ink-500">
               {formatCount(video.subscriberCount ?? 84200)} subscribers

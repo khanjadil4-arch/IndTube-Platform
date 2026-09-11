@@ -1,10 +1,11 @@
 import { NavLink, Link } from 'react-router-dom';
-import { Home, Play, Plus, Users, Library } from 'lucide-react';
+import { Home, Play, Plus, Users, Library, Bell } from 'lucide-react';
 
 const items = [
   { to: '/', icon: Home, label: 'Home' },
-  { to: '/feed', icon: Play, label: 'Shorts' },
+  { to: '/feed', icon: Play, label: 'Trending' },
   { to: '/subscriptions', icon: Users, label: 'Subs' },
+  { to: '/notifications', icon: Bell, label: 'Alerts' },
   { to: '/profile', icon: Library, label: 'Library' },
 ];
 

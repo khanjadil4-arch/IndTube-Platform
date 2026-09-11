@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Flame, Music, Gamepad2, Newspaper, Zap, Users } from 'lucide-react';
 import { homeTabs, mockVideos, mockShorts, mockChannels } from '@/data/mockData';
 import { formatCount, formatRelativeTime } from '@/lib/format';
@@ -10,6 +10,7 @@ import VideoCard from '@/components/VideoCard';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('home');
+  const navigate = useNavigate();
 
   const featuredVideo = mockVideos[2]; // Live at Sunset — highest views
   const trendingVideos = [...mockVideos].sort((a, b) => b.viewCount - a.viewCount).slice(0, 4);
@@ -46,7 +47,7 @@ export default function HomePage() {
 
       {/* Shorts section */}
       <section className="mb-6">
-        <SectionHeader title="Shorts" icon={Zap} onSeeAll={() => {}} />
+        <SectionHeader title="Shorts" icon={Zap} onSeeAll={() => navigate('/search?q=short')} />
         <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-3 px-3 pb-2">
           {shorts.map((s) => (
             <ShortCard key={s.id} short={s} />
@@ -56,7 +57,7 @@ export default function HomePage() {
 
       {/* Trending videos */}
       <section className="mb-6">
-        <SectionHeader title="Trending" icon={Flame} onSeeAll={() => {}} />
+        <SectionHeader title="Trending" icon={Flame} onSeeAll={() => navigate('/feed')} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
           {trendingVideos.map((v) => (
             <VideoCard key={v.id} video={v} />
@@ -66,7 +67,7 @@ export default function HomePage() {
 
       {/* Recommended */}
       <section className="mb-6">
-        <SectionHeader title="Recommended" icon={Zap} onSeeAll={() => {}} />
+        <SectionHeader title="Recommended" icon={Zap} onSeeAll={() => navigate('/feed')} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
           {recommended.map((v) => (
             <VideoCard key={v.id} video={v} />
@@ -76,7 +77,7 @@ export default function HomePage() {
 
       {/* Music */}
       <section className="mb-6">
-        <SectionHeader title="Music" icon={Music} onSeeAll={() => {}} />
+        <SectionHeader title="Music" icon={Music} onSeeAll={() => navigate('/search?q=music')} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
           {musicVideos.map((v) => (
             <VideoCard key={v.id} video={v} />
@@ -86,7 +87,7 @@ export default function HomePage() {
 
       {/* Gaming */}
       <section className="mb-6">
-        <SectionHeader title="Gaming" icon={Gamepad2} onSeeAll={() => {}} />
+        <SectionHeader title="Gaming" icon={Gamepad2} onSeeAll={() => navigate('/search?q=gaming')} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
           {gamingVideos.map((v) => (
             <VideoCard key={v.id} video={v} />
@@ -96,7 +97,7 @@ export default function HomePage() {
 
       {/* News / Tech */}
       <section className="mb-6">
-        <SectionHeader title="News & Tech" icon={Newspaper} onSeeAll={() => {}} />
+        <SectionHeader title="News & Tech" icon={Newspaper} onSeeAll={() => navigate('/search?q=tech')} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
           {newsVideos.map((v) => (
             <VideoCard key={v.id} video={v} />
@@ -106,7 +107,7 @@ export default function HomePage() {
 
       {/* Popular Channels */}
       <section className="mb-8">
-        <SectionHeader title="Popular Channels" icon={Users} onSeeAll={() => {}} />
+        <SectionHeader title="Popular Channels" icon={Users} onSeeAll={() => navigate('/subscriptions')} />
         <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-3 px-3 pb-2">
           {popularChannels.map((c) => (
             <Link
