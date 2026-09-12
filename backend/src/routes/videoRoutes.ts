@@ -1,13 +1,24 @@
 /**
- * Video upload routes — multipart/chunked upload to S3-compatible storage.
+ * Video routes — upload, metadata, and interactions.
  *
- * Flow:
- *   1. POST /api/videos/initiate  — creates video record + S3 multipart upload, returns session
- *   2. POST /api/videos/:id/parts/:partNumber — returns presigned URL for that chunk
- *   3. POST /api/videos/:id/complete  — completes multipart upload, sets status=PROCESSING
- *   4. POST /api/videos/:id/abort    — aborts multipart upload, deletes video record
- *   5. GET  /api/videos/:id          — returns video metadata
- *   6. GET  /api/videos/:id/upload-status — returns upload session state for resume
+ * Upload flow (authenticated):
+ *   1. POST /api/videos/initiate  — creates video record + S3 multipart upload
+ *   2. POST /api/videos/:id/parts/:partNumber — presigned URL for chunk
+ *   3. POST /api/videos/:id/complete  — completes multipart upload
+ *   4. POST /api/videos/:id/abort    — aborts multipart upload
+ *   5. GET  /api/videos/:id/upload-status — upload session state
+ *
+ * Public:
+ *   GET  /api/videos/:id            — video metadata
+ *
+ * Interactions (authenticated):
+ *   POST   /api/videos/:id/like      — set like
+ *   POST   /api/videos/:id/dislike   — set dislike
+ *   DELETE /api/videos/:id/reaction  — remove reaction
+ *   POST   /api/videos/:id/view      — record a view
+ *   GET    /api/videos/:id/comments  — list comments
+ *   POST   /api/videos/:id/comments  — create comment
+ *   POST   /api/videos/:id/progress  — save watch progress
  */
 
 import { Router, type Response } from 'express';
@@ -38,10 +49,17 @@ import {
   completeUploadSession,
   abortUploadSession,
 } from '../services/uploadService.js';
+import {
+  setVideoReaction,
+  removeVideoReaction,
+  recordVideoView,
+  getCommentsByVideo,
+  createComment,
+  upsertWatchProgress,
+  InteractionError,
+} from '../services/interactionService.js';
 
 const router = Router();
-
-router.use(authenticate);
 
 const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
 const CHUNK_SIZE = 8 * 1024 * 1024; // 8 MB per part
@@ -51,6 +69,37 @@ const ALLOWED_EXTENSIONS: Record<string, string> = {
   'video/webm': 'webm',
   'video/quicktime': 'mov',
 };
+
+// ─── Public routes ───────────────────────────────────────────────────────────
+
+// GET /api/videos/:id
+router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const video = await getVideoById(req.params.id);
+    if (!video) {
+      res.status(404).json({ error: 'Video not found' });
+      return;
+    }
+    res.json({ video });
+  } catch {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/videos/:id/comments
+router.get('/:id/comments', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const comments = await getCommentsByVideo(req.user?.sub ?? null, req.params.id);
+    res.json({ comments });
+  } catch (err) {
+    console.error('Get comments error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─── Authenticated routes ────────────────────────────────────────────────────
+
+router.use(authenticate);
 
 // POST /api/videos/initiate
 router.post('/initiate', async (req: AuthenticatedRequest, res: Response) => {
@@ -289,16 +338,116 @@ router.get('/:id/upload-status', async (req: AuthenticatedRequest, res: Response
   }
 });
 
-// GET /api/videos/:id
-router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
+// ─── Interaction endpoints ───────────────────────────────────────────────────
+
+// POST /api/videos/:id/like
+router.post('/:id/like', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const video = await getVideoById(req.params.id);
-    if (!video) {
-      res.status(404).json({ error: 'Video not found' });
+    const result = await setVideoReaction(req.user!.sub, req.params.id, 'LIKE');
+    res.json(result);
+  } catch (err) {
+    if (err instanceof InteractionError) {
+      res.status(err.statusCode).json({ error: err.message });
       return;
     }
-    res.json({ video });
-  } catch {
+    console.error('Like error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/videos/:id/dislike
+router.post('/:id/dislike', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await setVideoReaction(req.user!.sub, req.params.id, 'DISLIKE');
+    res.json(result);
+  } catch (err) {
+    if (err instanceof InteractionError) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
+    console.error('Dislike error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/videos/:id/reaction
+router.delete('/:id/reaction', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await removeVideoReaction(req.user!.sub, req.params.id);
+    res.json(result);
+  } catch (err) {
+    if (err instanceof InteractionError) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
+    console.error('Remove reaction error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/videos/:id/view
+router.post('/:id/view', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { sessionHash } = req.body as { sessionHash?: string };
+    const result = await recordVideoView(req.params.id, req.user?.sub ?? null, sessionHash ?? null);
+    res.json(result);
+  } catch (err) {
+    if (err instanceof InteractionError) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
+    console.error('Record view error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/videos/:id/comments
+router.post('/:id/comments', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { text, parentCommentId } = req.body as {
+      text: string;
+      parentCommentId?: string;
+    };
+
+    if (!text || typeof text !== 'string') {
+      res.status(400).json({ error: 'text is required' });
+      return;
+    }
+
+    const comment = await createComment(
+      req.user!.sub,
+      req.params.id,
+      text,
+      parentCommentId ?? null,
+    );
+    res.status(201).json({ comment });
+  } catch (err) {
+    if (err instanceof InteractionError) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
+    console.error('Create comment error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/videos/:id/progress
+router.post('/:id/progress', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { watchedPosition } = req.body as { watchedPosition?: number };
+    if (watchedPosition === undefined || typeof watchedPosition !== 'number') {
+      res.status(400).json({ error: 'watchedPosition is required' });
+      return;
+    }
+
+    await upsertWatchProgress(req.user!.sub, req.params.id, watchedPosition);
+    res.json({ success: true });
+  } catch (err) {
+    if (err instanceof InteractionError) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
+    console.error('Save watch progress error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

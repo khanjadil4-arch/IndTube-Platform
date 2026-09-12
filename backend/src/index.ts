@@ -17,6 +17,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import watchHistoryRoutes from './routes/watchHistoryRoutes.js';
 import savedVideoRoutes from './routes/savedVideoRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import creatorRoutes from './routes/creatorRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/watch-history', watchHistoryRoutes);
 app.use('/api/saved-videos', savedVideoRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/creator', creatorRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
