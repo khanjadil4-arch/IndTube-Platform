@@ -25,7 +25,7 @@ router.use(authenticate);
 // GET /api/notifications
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const limit = Math.min(parseInt(String(req.query.limit)) || 30, 100);
+    const limit = Math.min(parseInt(String(req.query.limit)) || 20, 100);
     const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
     const result = await getNotifications(req.user!.sub, limit, offset);
     res.json(result);

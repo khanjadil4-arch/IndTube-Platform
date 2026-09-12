@@ -22,7 +22,7 @@ export interface NotificationRow {
 
 export async function getNotifications(
   userId: string,
-  limit = 30,
+  limit = 20,
   offset = 0,
 ): Promise<{ notifications: NotificationRow[]; total: number }> {
   const notifications = await query<NotificationRow>(
