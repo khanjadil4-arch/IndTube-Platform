@@ -1,17 +1,44 @@
+import { useState } from 'react';
 import { Bell, CheckCircle2 } from 'lucide-react';
 import { mockNotifications } from '@/data/mockData';
 import { formatRelativeTime } from '@/lib/format';
+import { markAllNotificationsRead } from '@/services/notificationService';
 
 export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState(mockNotifications);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleMarkAllRead = async () => {
+    if (unreadCount === 0) return;
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await markAllNotificationsRead();
+    } catch {
+      setNotifications(mockNotifications);
+    }
+  };
+
   return (
     <div className="px-3 sm:px-4 py-4 max-w-3xl mx-auto">
-      <div className="flex items-center gap-2 mb-4">
-        <Bell className="w-5 h-5 text-brand-500" />
-        <h1 className="text-lg font-bold">Notifications</h1>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Bell className="w-5 h-5 text-brand-500" />
+          <h1 className="text-lg font-bold">Notifications</h1>
+        </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={handleMarkAllRead}
+            className="flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300 transition-colors"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Mark all as read
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-1">
-        {mockNotifications.map((n) => (
+        {notifications.map((n) => (
           <div
             key={n.id}
             className={`flex gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer ${

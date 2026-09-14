@@ -61,7 +61,7 @@ export async function markAsRead(
   notificationId: string,
 ): Promise<void> {
   const result = await query(
-    'UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2',
+    'UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2 RETURNING id',
     [notificationId, userId],
   );
   if (result.length === 0) {

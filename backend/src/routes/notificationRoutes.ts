@@ -2,6 +2,7 @@
  * Notification routes
  *   GET    /api/notifications           — list user's notifications
  *   GET    /api/notifications/unread     — get unread count
+ *   GET    /api/notifications/unread-count — get unread count (alt)
  *   POST   /api/notifications/:id/read   — mark single notification as read
  *   POST   /api/notifications/read-all    — mark all as read
  *   DELETE /api/notifications/:id         — delete a notification
@@ -46,10 +47,26 @@ router.get('/unread', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+// GET /api/notifications/unread-count
+router.get('/unread-count', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const count = await getUnreadCount(req.user!.sub);
+    res.json({ count });
+  } catch (err) {
+    console.error('Get unread count error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/notifications/:id/read
 router.post('/:id/read', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await markAsRead(req.user!.sub, req.params.id);
+    const notificationId = req.params.id;
+    if (!notificationId) {
+      res.status(400).json({ error: 'Notification ID is required' });
+      return;
+    }
+    await markAsRead(req.user!.sub, notificationId);
     res.json({ success: true });
   } catch (err) {
     if (err instanceof NotificationError) {
@@ -67,6 +84,10 @@ router.post('/read-all', async (req: AuthenticatedRequest, res: Response) => {
     await markAllAsRead(req.user!.sub);
     res.json({ success: true });
   } catch (err) {
+    if (err instanceof NotificationError) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
     console.error('Mark all read error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -75,7 +96,12 @@ router.post('/read-all', async (req: AuthenticatedRequest, res: Response) => {
 // DELETE /api/notifications/:id
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await deleteNotification(req.user!.sub, req.params.id);
+    const notificationId = req.params.id;
+    if (!notificationId) {
+      res.status(400).json({ error: 'Notification ID is required' });
+      return;
+    }
+    await deleteNotification(req.user!.sub, notificationId);
     res.json({ success: true });
   } catch (err) {
     if (err instanceof NotificationError) {
